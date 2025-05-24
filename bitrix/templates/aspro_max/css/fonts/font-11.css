@@ -1,7 +1,7 @@
 /* 14px/22px Montserrat (Default) */
 html{font-size: 14px;}
-body,body div.bx-yandex-map, body .ymaps-map .ymaps-b-balloon,.fancybox-title{ font: 14px/22px "Montserrat", Arial, sans-serif; }
-h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6,.popup-window{font-family:"Montserrat", Arial, sans-serif;}
+body,body div.bx-yandex-map, body .ymaps-map .ymaps-b-balloon,.fancybox-title{ font: 14px/22px "Montserrat", Arial, sans-serif;}
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6,.popup-window{font-family:"Montserrat", Arial, sans-serif;}s
 body .breadcrumb > li:after{margin-top:-3px;}
 body .item-views.type_2_within.within.services-items .item .toogle>span:before{top:3px;}
 
