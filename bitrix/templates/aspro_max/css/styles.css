@@ -335,8 +335,9 @@ body .front_page > .wraps > .wrapper_inner .middle {
 
 .drag-block.container .content_wrapper_block,
 .drag-block.container > div[id*="bx_incl"] > .content_wrapper_block {
-  border-bottom: 1px solid #ececec;
-  border-color: var(--stroke_black);
+  border-bottom: 2px solid #ececec;
+  /* border-color: var(--stroke_black); */
+  border-color: black;
 }
 
 .drag-block.container[data-file] .content_wrapper_block > .maxwidth-theme {

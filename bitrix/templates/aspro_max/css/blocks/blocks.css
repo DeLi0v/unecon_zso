@@ -412,6 +412,7 @@
 }
 .side-news__item-date {
   margin: 0px 0px 2px;
+  color: black !important;
 }
 .side-news__item-link {
   display: block;

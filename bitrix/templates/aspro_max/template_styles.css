@@ -3730,9 +3730,12 @@ body .logo-row .phone .svg-inline-down {
   line-height: 40px;
   background: #fafafa;
   background: var(--light_bg_black);
-  border: 1px solid #ececec;
-  border-color: var(--stroke_black);
-  color: var(--white_text_black);
+  /* border: 1px solid #ececec; */
+  /* border-color: var(--stroke_black); */
+  color: black;
+  font-weight: 600;
+  border-color: black;
+  border: 2px solid black;
 }
 .logo_and_menu-row .search.search--hastype .search-input {
   padding-right: 124px;
@@ -4714,8 +4717,8 @@ body .wrapper1.mfixed_Y > div#mobileheader.fixed {
 #mobileheader .mobileheader-v4 {
   background: #fff;
   background: var(--black_bg_black);
-  border-bottom: 1px solid #f5f5f5;
-  border-color: var(--darkerblack_bg_black);
+  border-bottom: 2px solid #f5f5f5;
+  border-color: black;
 }
 #mobileheader .mobileheader-v2 {
   color: #fff;
@@ -5523,6 +5526,7 @@ html.mobile li.viber.viber_desktop {
     right: 0;
     left: 0;
     transition: z-index 0.25s ease-in-out;
+    border-bottom: 2px solid black;
   }
 
   body .xzoom-source,

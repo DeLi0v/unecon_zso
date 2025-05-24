@@ -311,8 +311,9 @@ ul.list-unstyled li:before {
   border-radius: 0px;
 }
 .bordered {
-  border: 1px solid #ececec;
-  border-color: var(--stroke_black);
+  border: 2px solid #ececec;
+  /* border-color: var(--stroke_black); */
+  border-color: black;
 }
 .bordered-bottom {
   border-bottom: 1px solid #ececec;

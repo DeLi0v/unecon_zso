@@ -26,6 +26,7 @@
 }
 .item-views.news2 .item-wrapper .item .period-block .date {
   display: block;
+  color: black;
 }
 .item-views.news2 .item-wrapper .item .period-block .date:first-letter {
   text-transform: capitalize;

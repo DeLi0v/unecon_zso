@@ -24,6 +24,8 @@
     padding: 0 70px 3px 14px;
     width: 100%;
     border-radius: 3px;
+    border-color: black !important;
+    border: 2px solid black !important;
   }
   .search .btn-search {
     position: absolute;
