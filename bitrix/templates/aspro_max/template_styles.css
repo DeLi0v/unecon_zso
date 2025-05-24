@@ -3913,6 +3913,7 @@ header .menu_top_block {
 header .wrapper_middle_menu *,
 .menu_top_block * {
   box-sizing: border-box;
+  color: black;
 }
 header .menu_top_block > li {
   display: inline-block;
