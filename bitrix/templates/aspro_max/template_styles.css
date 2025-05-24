@@ -3729,7 +3729,7 @@ body .logo-row .phone .svg-inline-down {
   font-size: 0.867em;
   line-height: 40px;
   background: #fafafa;
-  background: var(--light_bg_black);
+  background: #e6e8e7;
   /* border: 1px solid #ececec; */
   /* border-color: var(--stroke_black); */
   color: black;
