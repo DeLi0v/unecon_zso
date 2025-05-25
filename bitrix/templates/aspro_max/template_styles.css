@@ -1094,6 +1094,7 @@ input::-o-input-placeholder {
   background-color: var(--card_bg_hover_black);
   border: 1px solid #ccc;
   border-color: var(--stroke_black);
+  font-weight: 600;
 }
 input[type="text"],
 input[type="password"],
@@ -1101,10 +1102,9 @@ input[type="email"],
 input[type="tel"],
 select,
 textarea {
-  background: #fafafa;
-  background: var(--darkerblack_bg_black);
-  border: 1px solid #ececec;
-  border-color: var(--stroke_black);
+  background: #e6e8e7;
+  border: 2px solid #ececec;
+  border-color: black;
   border-radius: 3px;
   box-shadow: none;
   color: #383838;
@@ -1112,6 +1112,7 @@ textarea {
   height: auto;
   font-size: 14px;
   outline: none;
+  font-weight: 600;
 }
 .form-control input[type="text"],
 .form-control input[type="password"],
@@ -9139,7 +9140,8 @@ a.inline.close svg * {
 }
 .popup div.form-control label,
 .form_body div.form-control label {
-  font-weight: 400;
+  font-weight: 600;
+  color: black;
 }
 
 /* one click */
@@ -10788,7 +10790,8 @@ body .filter input[type="radio"]:checked + label:after {
 #main .onoff input[type="checkbox"] + label {
   padding: 0px 0px 0px 50px;
   font-size: 13px;
-  color: #999;
+  color: black;
+  font-weight: 600;
 }
 #main .onoff input[type="checkbox"] + label.dark {
   color: #333;
@@ -16308,7 +16311,7 @@ div[id^="bx_auth_error"],
   text-align: left;
 }
 .pk-page .form-control .text-block {
-  color: #999;
+  color: black;
   font-size: 13px;
   margin: 4px 0 -4px 0;
 }

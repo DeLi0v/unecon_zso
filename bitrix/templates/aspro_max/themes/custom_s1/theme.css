@@ -522,6 +522,7 @@ body #basket-root .basket-checkout-section .btn.btn-default:active,
 body #basket-root .basket-checkout-section .btn.btn-default:focus {
   border-color: #e6393e;
   background-color: #e6393e;
+  /* background-color: #999999; */
 }
 #basket-root #basket-warning {
   border-color: #e31e23;
@@ -793,8 +794,9 @@ h4:hover .opener_icon,
 .btn.btn-default:hover,
 .btn.btn-default:active,
 .btn.btn-default:focus {
-  background-color: #e6393e;
-  border-color: #e6393e;
+  /* background-color: #e6393e; */
+  background-color: #999999;
+  border-color: #999;
 }
 .btn.btn-default.white:not(.grey) {
   color: #e31e23 !important;

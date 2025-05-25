@@ -18,8 +18,9 @@
   background-color: #999999 !important; /* светло-серый фон */
 }
 
-.dropdown-menu .menu-item {
-  background-color: var(--theme-base-color) !important;
+.dropdown-menu .menu-item:focus,
+.dropdown-menu .menu-item:hover {
+  background-color: yellow !important;
 }
 
 .mega-menu .dropdown-menu {
