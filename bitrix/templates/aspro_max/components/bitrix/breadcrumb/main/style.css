@@ -23,7 +23,7 @@
   line-height: 18px;
   margin: 0 10px 0px 9px;
   border: none;
-  color: #dddddd;
+  color: black;
 }
 .breadcrumbs__link {
   text-decoration: none;
@@ -58,7 +58,9 @@
 }
 
 .breadcrumbs__item-name {
-  color: #b6b5b5;
+  /* color: #b6b5b5; */
+  font-weight: 600;
+  color: black;
 }
 .breadcrumbs a:hover span {
   color: var(--fill_dark_light_white_hover);

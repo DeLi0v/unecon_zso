@@ -1146,7 +1146,8 @@ blockquote p {
 }
 .table-striped > tbody > tr:nth-child(odd) > td,
 .table-striped > tbody > tr:nth-child(odd) > th {
-  background-color: var(--darkerblack_bg_black);
+  /* background-color: var(--darkerblack_bg_black); */
+  background-color: #e6e8e7;
 }
 .lineclamp-2 {
   -webkit-line-clamp: 2;

@@ -7,6 +7,21 @@
   overflow: hidden;
 }
 
+/* Подсветка всей ячейки меню при наведении мышкой */
+.menu-item:hover,
+.menu-item:focus-within,
+.menu-item.dropdown:hover,
+.menu-item.dropdown:focus,
+.menu-item .dropdown .menu-item:hover,
+.menu-item .dropdown .menu-item:focus,
+.menu-item .dropdown:hover .wrap {
+  background-color: #999999 !important; /* светло-серый фон */
+}
+
+.dropdown-menu .menu-item {
+  background-color: var(--theme-base-color) !important;
+}
+
 .mega-menu .dropdown-menu {
   display: block;
   opacity: 0;

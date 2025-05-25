@@ -650,7 +650,8 @@ body.jqm-initied.wf {
 }
 
 .topic .colored_theme_hover_bg-block:not(:hover) .svg path {
-  fill: #b8b8b8;
+  /* fill: #b8b8b8; */
+  fill: black;
 }
 
 .has-secion-banner.light-menu-color .page-top .svg path {
