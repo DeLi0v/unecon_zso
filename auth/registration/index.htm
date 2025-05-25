@@ -621,24 +621,55 @@
         --theme-page-width-padding: 30px;
       }
 
-      .captcha_ear {
-        width: 35px !important;
-        height: 35px;
-        border: 1px solid transparent;
-        cursor: pointer;
-        left: 215px;
-        position: absolute;
-        top: 5px;
-      }
-      
-      .captcha_ear img {
-        width: 35px !important;
-        height: 35px !important;
+      .captcha_content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap; /* Можно убрать, если строго в одну строку */
       }
 
-      .captcha_ear:hover {
+      .captcha_image {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .captcha_reload {
         cursor: pointer;
-        background-color: black;
+        white-space: nowrap;
+      }
+
+      .captcha_ear {
+        position: relative;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        left: 38px;
+      }
+
+      .captcha_ear img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .captcha_ear .img-hover {
+        opacity: 0;
+      }
+
+      .captcha_ear:hover .img-hover {
+        opacity: 1;
+      }
+
+      .captcha_ear:hover .img-default {
+        opacity: 0;
+      }
+
+      .captcha_input input {
+        height: 38px;
+        padding: 6px 10px;
+        font-size: 14px;
       }
     </style>
     <script
@@ -2344,39 +2375,54 @@
 
                           <div class="clearboth"></div>
                           <div class="form-control captcha-row clearfix">
-                            <label
-                              ><span
+                            <label>
+                              <span
                                 >Введите код&nbsp;<span class="star"
                                   >*</span
                                 ></span
-                              ></label
-                            >
-                            <div class="captcha_image">
-                              <img
-                                data-lazyload=""
-                                class="lazy"
-                                src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
-                                data-src="/bitrix/tools/captcha.php?captcha_sid=08a468ec07f324e642c30491d432fda6"
-                                border="0"
-                              />
-                              <input
-                                type="hidden"
-                                name="captcha_sid"
-                                value="08a468ec07f324e642c30491d432fda6"
-                              />
-                              <div class="captcha_reload">Обновить</div>
-                              <div class="captcha_ear"><img src="/images/ear.png" /></div>
-                            </div>
-                            <div class="captcha_input">
-                              <input
-                                type="text"
-                                class="inputtext captcha"
-                                name="captcha_word"
-                                size="30"
-                                maxlength="50"
-                                value=""
-                                required=""
-                              />
+                              >
+                            </label>
+
+                            <div class="captcha_content">
+                              <div class="captcha_image">
+                                <img
+                                  data-lazyload=""
+                                  class="lazyloaded"
+                                  src="/bitrix/tools/captcha.php?captcha_sid=08a468ec07f324e642c30491d432fda6"
+                                  data-src="/bitrix/tools/captcha.php?captcha_sid=08a468ec07f324e642c30491d432fda6"
+                                  border="0"
+                                />
+                                <input
+                                  type="hidden"
+                                  name="captcha_sid"
+                                  value="08a468ec07f324e642c30491d432fda6"
+                                />
+                                <div class="captcha_reload" style="left: 185px;">Обновить</div>
+                                <div class="captcha_ear">
+                                  <img
+                                    style="width: 30px; height: 30px"
+                                    class="img-default"
+                                    src="/images/hearing-1.png"
+                                  />
+                                  <img
+                                    style="width: 30px; height: 30px"
+                                    class="img-hover"
+                                    src="/images/hearing-2.png"
+                                  />
+                                </div>
+                              </div>
+
+                              <div class="captcha_input">
+                                <input
+                                  type="text"
+                                  class="inputtext captcha"
+                                  name="captcha_word"
+                                  size="30"
+                                  maxlength="50"
+                                  required
+                                  aria-required="true"
+                                />
+                              </div>
                             </div>
                           </div>
                           <div class="clearboth"></div>
@@ -2402,7 +2448,7 @@
                           <div class="line-block form_footer__bottom">
                             <div class="line-block__item">
                               <button
-                                style="font-weight: 600;"
+                                style="font-weight: 600"
                                 class="btn btn-default btn-lg"
                                 type="submit"
                                 name="register_submit_button1"
@@ -2414,7 +2460,10 @@
                             <div class="line-block__item">
                               <div class="required-fields-note">
                                 <span class="star">*</span
-                                ><span class="muted888 font_xs" style="font-weight: 600; color:black">
+                                ><span
+                                  class="muted888 font_xs"
+                                  style="font-weight: 600; color: black"
+                                >
                                   &ndash; обязательные поля</span
                                 >
                               </div>

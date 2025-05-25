@@ -23,7 +23,7 @@
   z-index: 4;
 }
 .page-top > div:last-of-type {
-  padding: 15px 0px 40px;
+  padding: 15px 0px 15px;
 }
 .grey_block .page-top > div:last-of-type {
   margin-bottom: 30px;

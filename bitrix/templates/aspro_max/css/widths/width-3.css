@@ -159,6 +159,9 @@ body.fill_bg_y .top_big_one_banner {
 
 .wrapper1:not(.with_left_block) .detail_content_wrapper.side_image_N .content-text {
   max-width: 1100px;
+  font-family: "Montserrat";
+    font-weight: 600;
+    color: black !important;
 }
 body .project_block:not(.wti) .info,
 body .wrapper_inner_half .item .left_block_store {

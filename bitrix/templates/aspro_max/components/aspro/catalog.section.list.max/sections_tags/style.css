@@ -19,6 +19,8 @@
   position: relative;
   display: block;
   line-height: 16px;
+  font-family: 'Montserrat';
+  font-weight: 600;
 }
 
 .sections_wrap_detail .section-detail-list {

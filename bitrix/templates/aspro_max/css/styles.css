@@ -10353,6 +10353,7 @@ body .bx-soa-auth .eye-password:after {
 
 .eye-password.password-show:after {
   background-image: url("../images/svg/eye_open.svg");
+  background-color: black;
 }
 
 /**/

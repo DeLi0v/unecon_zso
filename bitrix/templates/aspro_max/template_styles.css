@@ -4133,8 +4133,9 @@ body .menu_top_block.catalog_block li.full.hover .dropdown {
   z-index: 21;
 }
 .menu_top_block li.full.m_line .dropdown {
-  min-height: auto !important;
+  /* min-height: auto !important; */
   height: auto;
+  border: 2px solid;
 }
 
 
@@ -4287,7 +4288,7 @@ body .menu_top_block.catalog_block .dropdown > li > a {
 .menu_top_block.catalog_block .dropdown > li.full > .dropdown > li,
 header .menu.top.catalogfirst li.full > .dropdown > li {
   padding: 5px 30px 35px 24px;
-  float: left;
+  float: center;
   width: 33%;
 }
 
