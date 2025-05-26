@@ -1,45 +1,42 @@
 import os
 import re
 
-# Папка, в которой будем искать .htm/.html файлы
-root_dir = '.'  # <-- Укажи свою папку
+BASE_PATH = 'bitrix/templates/aspro_max/images'  # Путь, который надо привести к относительному
+ROOT_DIR = './'  # Папка, откуда начинается поиск .htm файлов (можно изменить)
 
-# Путь к папке с svg-файлами, к которому нужно сделать относительную ссылку
-target_path = os.path.normpath('bitrix/templates/aspro_max/images/svg')
+# Регулярка ищет src="..." или data-src='...'
+pattern = re.compile(r'''(?P<attr>src|data-src)=["'](/?''' + re.escape(BASE_PATH) + r'''[^"']+)["']''')
 
-# Регулярка для поиска любых xlink:href ссылок на целевой каталог
-pattern = re.compile(r'''xlink:href=["']([^"']*bitrix/templates/aspro_max/images/svg/[^"']+)["']''')
+def get_relative_prefix(depth):
+    return './' if depth == 0 else '../' * depth
 
-for subdir, _, files in os.walk(root_dir):
-    for filename in files:
-        if filename.endswith(('.htm', '.html')):
-            file_path = os.path.join(subdir, filename)
+def make_relative_path(abs_path, file_path):
+    depth = len(os.path.relpath(file_path, ROOT_DIR).split(os.sep)) - 1
+    rel_prefix = get_relative_prefix(depth)
+    return rel_prefix + abs_path.lstrip('/')
 
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+def process_file(filepath):
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
 
-            # Функция для замены каждой найденной ссылки
-            def replace_link(match):
-                original_href = match.group(1)
-                # Абсолютный путь к текущему HTML-файлу
-                html_dir = os.path.dirname(file_path)
-                # Абсолютный путь к SVG-файлу (убираем префиксы ../ или /)
-                cleaned_href = original_href.lstrip('/').lstrip('./')
-                full_svg_path = os.path.normpath(os.path.join(root_dir, cleaned_href))
+    def replace(match):
+        attr = match.group('attr')
+        abs_path = match.group(2)
+        rel_path = make_relative_path(abs_path, filepath)
+        return f'{attr}="{rel_path}"'
 
-                # Путь до папки, где лежит SVG
-                rel_svg_dir = os.path.dirname(full_svg_path)
+    new_content = pattern.sub(replace, content)
 
-                # Относительный путь от HTML-файла до целевого SVG-файла
-                relative_path = os.path.relpath(full_svg_path, html_dir)
-                # Приводим к POSIX-формату (с прямыми слэшами)
-                relative_path = relative_path.replace(os.sep, '/')
+    if new_content != content:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+        print(f"✔ Обновлено: {filepath}")
+    else:
+        print(f"— Без изменений: {filepath}")
 
-                return f'xlink:href="{relative_path}"'
-
-            new_content = pattern.sub(replace_link, content)
-
-            if new_content != content:
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(new_content)
-                print(f'Updated: {file_path}')
+# Рекурсивный обход папок
+for dirpath, _, filenames in os.walk(ROOT_DIR):
+    for filename in filenames:
+        if filename.endswith('.htm'):
+            filepath = os.path.join(dirpath, filename)
+            process_file(filepath)
