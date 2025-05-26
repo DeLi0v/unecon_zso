@@ -1,56 +1,45 @@
 import os
 import re
 
-# Корень сайта — здесь нужно указать абсолютный путь к корневой папке сайта на диске
-ROOT_DIR = os.path.abspath('.')  # если скрипт запускается из корня сайта
+# Папка, в которой будем искать .htm/.html файлы
+root_dir = '.'  # <-- Укажи свою папку
 
-def get_relative_upload_path(file_path):
-    # Вычисляем относительный путь от директории файла до корня
-    file_dir = os.path.dirname(os.path.abspath(file_path))
-    relative_path = os.path.relpath(ROOT_DIR, file_dir)
-    if relative_path == '.':
-        # Если файл в корне, просто upload/...
-        return 'upload'
-    else:
-        # Иначе, например ../../upload
-        return os.path.join(relative_path, 'upload').replace('\\', '/')
+# Путь к папке с svg-файлами, к которому нужно сделать относительную ссылку
+target_path = os.path.normpath('bitrix/templates/aspro_max/images/svg')
 
-def replace_upload_paths_in_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+# Регулярка для поиска любых xlink:href ссылок на целевой каталог
+pattern = re.compile(r'''xlink:href=["']([^"']*bitrix/templates/aspro_max/images/svg/[^"']+)["']''')
 
-    relative_upload_path = get_relative_upload_path(file_path)
+for subdir, _, files in os.walk(root_dir):
+    for filename in files:
+        if filename.endswith(('.htm', '.html')):
+            file_path = os.path.join(subdir, filename)
 
-    # Паттерн для src, href, data-src, data-bg
-    attr_pattern = re.compile(r'(src|href|data-src|data-bg)=["\']/upload/([^"\']+)["\']')
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
 
-    def attr_replacer(match):
-        attr = match.group(1)
-        path_rest = match.group(2)
-        return f'{attr}="{relative_upload_path}/{path_rest}"'
+            # Функция для замены каждой найденной ссылки
+            def replace_link(match):
+                original_href = match.group(1)
+                # Абсолютный путь к текущему HTML-файлу
+                html_dir = os.path.dirname(file_path)
+                # Абсолютный путь к SVG-файлу (убираем префиксы ../ или /)
+                cleaned_href = original_href.lstrip('/').lstrip('./')
+                full_svg_path = os.path.normpath(os.path.join(root_dir, cleaned_href))
 
-    content = attr_pattern.sub(attr_replacer, content)
+                # Путь до папки, где лежит SVG
+                rel_svg_dir = os.path.dirname(full_svg_path)
 
-    # Паттерн для url("/upload/...")
-    url_pattern = re.compile(r'url\(["\']/upload/([^"\']+)["\']\)')
+                # Относительный путь от HTML-файла до целевого SVG-файла
+                relative_path = os.path.relpath(full_svg_path, html_dir)
+                # Приводим к POSIX-формату (с прямыми слэшами)
+                relative_path = relative_path.replace(os.sep, '/')
 
-    def url_replacer(match):
-        path_rest = match.group(1)
-        return f'url("{relative_upload_path}/{path_rest}")'
+                return f'xlink:href="{relative_path}"'
 
-    content = url_pattern.sub(url_replacer, content)
+            new_content = pattern.sub(replace_link, content)
 
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(content)
-
-    print(f'Обработан файл: {file_path}')
-
-def process_all_htm_files(start_dir):
-    for root, dirs, files in os.walk(start_dir):
-        for file in files:
-            if file.lower().endswith('.htm'):
-                full_path = os.path.join(root, file)
-                replace_upload_paths_in_file(full_path)
-
-if __name__ == '__main__':
-    process_all_htm_files(ROOT_DIR)
+            if new_content != content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                print(f'Updated: {file_path}')
