@@ -1,67 +1,68 @@
 import os
 import re
 
+TARGET_DIR = 'catalog'  # <- ЗАДАЙ свою папку здесь
 ROOT_DIR = os.path.abspath('./')
-LOGO_REL_PATH = 'upload/CMax/7de/a5zzzr7oxd95dux98mdxu5xoycjlquue.png'  # путь к логотипу от корня сайта
 
-# Шаблон для <a href="index.htm" ...>
-pattern_href = re.compile(r'<a\s+([^>]*?)href=["\']index\.htm["\']', flags=re.IGNORECASE)
+pattern = re.compile(
+    r'''(?P<attr>href|src|data-src)=["'](?P<path>(?!https?:|data:|mailto:|tel:|#)[^"']+)["']''',
+    flags=re.IGNORECASE
+)
 
-# Шаблоны для логотипа
-pattern_src = re.compile(r'src=["\']upload/CMax/[^"\']+["\']', flags=re.IGNORECASE)
-pattern_data_src = re.compile(r'data-src=["\']upload/CMax/[^"\']+["\']', flags=re.IGNORECASE)
+def find_file_path_from_site_root(target_rel_path):
+    """Ищет файл в структуре сайта, возвращает его абсолютный путь, если найден"""
+    for dirpath, _, filenames in os.walk(ROOT_DIR):
+        for filename in filenames:
+            if os.path.normpath(os.path.join(dirpath, filename)).endswith(os.path.normpath(target_rel_path)):
+                return os.path.join(dirpath, filename)
+    return None
 
-def make_relative(from_file, to_path):
-    from_dir = os.path.dirname(os.path.abspath(from_file))
-    to_abs = os.path.normpath(os.path.join(ROOT_DIR, to_path))
-    return os.path.relpath(to_abs, from_dir).replace('\\', '/')
+def resolve_correct_relative(source_file, link_path):
+    """Формирует корректный относительный путь к файлу от source_file"""
+    source_dir = os.path.dirname(source_file)
+    abs_source_dir = os.path.abspath(source_dir)
+
+    # 1. Сначала пробуем интерпретировать путь относительно текущего файла
+    candidate_abs = os.path.abspath(os.path.join(abs_source_dir, link_path))
+    if os.path.exists(candidate_abs):
+        return os.path.relpath(candidate_abs, abs_source_dir).replace('\\', '/')
+
+    # 2. Иначе ищем в структуре сайта
+    found_abs = find_file_path_from_site_root(link_path)
+    if found_abs:
+        corrected = os.path.relpath(found_abs, abs_source_dir).replace('\\', '/')
+        return corrected
+
+    print(f"⚠ Не найден: {link_path} (в файле {source_file})")
+    return link_path
 
 def process_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    changed = False
+    def replace(match):
+        attr = match.group('attr')
+        path = match.group('path')
+        new_path = resolve_correct_relative(filepath, path)
+        if new_path != path:
+            print(f"{filepath}: {path} → {new_path}")
+        return f'{attr}="{new_path}"'
 
-    # Заменяем href="index.htm"
-    def repl_href(match):
-        nonlocal changed
-        new_href = make_relative(filepath, 'index.htm')
-        changed = True
-        print(f"{filepath}: href=\"index.htm\" → href=\"{new_href}\"")
-        return f'<a {match.group(1)}href="{new_href}"'
+    new_content = pattern.sub(replace, content)
 
-    content = pattern_href.sub(repl_href, content)
-
-    # Заменяем src="upload/..."
-    def repl_src(match):
-        nonlocal changed
-        new_path = make_relative(filepath, LOGO_REL_PATH)
-        changed = True
-        print(f"{filepath}: src → {new_path}")
-        return f'src="{new_path}"'
-
-    content = pattern_src.sub(repl_src, content)
-
-    # Заменяем data-src="upload/..."
-    def repl_data_src(match):
-        nonlocal changed
-        new_path = make_relative(filepath, LOGO_REL_PATH)
-        changed = True
-        print(f"{filepath}: data-src → {new_path}")
-        return f'data-src="{new_path}"'
-
-    content = pattern_data_src.sub(repl_data_src, content)
-
-    if changed:
+    if new_content != content:
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        print(f"✔ Обновлён: {filepath}")
+            f.write(new_content)
+        print(f"✔ Обновлено: {filepath}")
     else:
         print(f"— Без изменений: {filepath}")
 
-# Обход всех .htm и .html файлов
-for dirpath, _, filenames in os.walk(ROOT_DIR):
-    for filename in filenames:
-        if filename.lower().endswith(('.htm', '.html')):
-            fullpath = os.path.join(dirpath, filename)
-            process_file(fullpath)
+def process_target_folder(target_folder):
+    abs_target = os.path.join(ROOT_DIR, target_folder)
+    for dirpath, _, filenames in os.walk(abs_target):
+        for filename in filenames:
+            if filename.lower().endswith('.htm'):
+                process_file(os.path.join(dirpath, filename))
+
+# ▶ Запускаем обработку целевой папки
+process_target_folder(TARGET_DIR)
