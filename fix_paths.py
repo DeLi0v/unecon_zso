@@ -1,19 +1,37 @@
 import os
 import re
 
-BASE_PATH = 'bitrix/templates/aspro_max/images'  # Путь, который надо привести к относительному
-ROOT_DIR = './'  # Папка, откуда начинается поиск .htm файлов (можно изменить)
+ROOT_DIR = './'  # Корневая директория сайта (относительно неё считаем уровни)
 
-# Регулярка ищет src="..." или data-src='...'
-pattern = re.compile(r'''(?P<attr>src|data-src)=["'](/?''' + re.escape(BASE_PATH) + r'''[^"']+)["']''')
+# Исправленное регулярное выражение (добавлена недостающая закрывающая кавычка)
+pattern = re.compile(r'''(?P<attr>href)=["'](?P<path>/?(?:\.\./)*([^"']+\.htm)[^"']*)["']''')
 
-def get_relative_prefix(depth):
-    return './' if depth == 0 else '../' * depth
+def get_relative_prefix(filepath):
+    """Возвращает относительный префикс (../) в зависимости от глубины вложенности файла"""
+    rel_path = os.path.relpath(filepath, ROOT_DIR)
+    depth = len(rel_path.split(os.sep)) - 1
+    return '../' * depth if depth > 0 else './'
 
-def make_relative_path(abs_path, file_path):
-    depth = len(os.path.relpath(file_path, ROOT_DIR).split(os.sep)) - 1
-    rel_prefix = get_relative_prefix(depth)
-    return rel_prefix + abs_path.lstrip('/')
+def make_relative_path(link_path, filepath):
+    """Преобразует путь в ссылке в относительный"""
+    if link_path.startswith('#'):
+        return link_path  # Якорные ссылки не трогаем
+
+    # Если ссылка уже относительная (содержит ../)
+    if link_path.startswith('../'):
+        return link_path
+
+    rel_prefix = get_relative_prefix(filepath)
+    
+    # Если ссылка абсолютная (начинается с /)
+    if link_path.startswith('/'):
+        return rel_prefix + link_path.lstrip('/')
+    
+    # Если ссылка уже относительная (без / в начале)
+    if '/' in link_path:
+        return rel_prefix + link_path
+    else:
+        return rel_prefix + link_path if rel_prefix != './' else link_path
 
 def process_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -21,9 +39,9 @@ def process_file(filepath):
 
     def replace(match):
         attr = match.group('attr')
-        abs_path = match.group(2)
-        rel_path = make_relative_path(abs_path, filepath)
-        return f'{attr}="{rel_path}"'
+        old_path = match.group('path')
+        new_path = make_relative_path(old_path, filepath)
+        return f'{attr}="{new_path}"'
 
     new_content = pattern.sub(replace, content)
 
@@ -34,7 +52,7 @@ def process_file(filepath):
     else:
         print(f"— Без изменений: {filepath}")
 
-# Рекурсивный обход папок
+# Рекурсивный обход всех .htm файлов
 for dirpath, _, filenames in os.walk(ROOT_DIR):
     for filename in filenames:
         if filename.endswith('.htm'):
