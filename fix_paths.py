@@ -1,60 +1,54 @@
 import os
 import re
 
-ROOT_DIR = './'  # Корневая директория сайта (относительно неё считаем уровни)
+ROOT_DIR = os.path.abspath('./')  # корень сайта
 
-# Исправленное регулярное выражение (добавлена недостающая закрывающая кавычка)
-pattern = re.compile(r'''(?P<attr>href)=["'](?P<path>/?(?:\.\./)*([^"']+\.htm)[^"']*)["']''')
+pattern = re.compile(
+    r'''(?P<attr>href|src|data-src)=["'](?P<path>(?!https?:|mailto:|tel:|#|data:)([^"']+?\.(?:htm|html|png|jpg|jpeg|gif|svg)))["']''',
+    flags=re.IGNORECASE
+)
 
-def get_relative_prefix(filepath):
-    """Возвращает относительный префикс (../) в зависимости от глубины вложенности файла"""
-    rel_path = os.path.relpath(filepath, ROOT_DIR)
-    depth = len(rel_path.split(os.sep)) - 1
-    return '../' * depth if depth > 0 else './'
+def resolve_relative_to_source(source_file, target_path):
+    """
+    Пересчитывает путь от файла source_file до target_path
+    даже если target_path уже был относительным
+    """
+    source_abs = os.path.abspath(source_file)
+    source_dir = os.path.dirname(source_abs)
 
-def make_relative_path(link_path, filepath):
-    """Преобразует путь в ссылке в относительный"""
-    if link_path.startswith('#'):
-        return link_path  # Якорные ссылки не трогаем
-
-    # Если ссылка уже относительная (содержит ../)
-    if link_path.startswith('../'):
-        return link_path
-
-    rel_prefix = get_relative_prefix(filepath)
-    
-    # Если ссылка абсолютная (начинается с /)
-    if link_path.startswith('/'):
-        return rel_prefix + link_path.lstrip('/')
-    
-    # Если ссылка уже относительная (без / в начале)
-    if '/' in link_path:
-        return rel_prefix + link_path
+    # Абсолютный путь до целевого ресурса
+    if target_path.startswith('/'):
+        target_abs = os.path.normpath(os.path.join(ROOT_DIR, target_path.lstrip('/')))
     else:
-        return rel_prefix + link_path if rel_prefix != './' else link_path
+        target_abs = os.path.normpath(os.path.join(source_dir, target_path))
+
+    # Пересчитываем путь от текущего файла
+    rel_path = os.path.relpath(target_abs, start=source_dir)
+    return rel_path.replace('\\', '/')
 
 def process_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    def replace(match):
+    def repl(match):
         attr = match.group('attr')
         old_path = match.group('path')
-        new_path = make_relative_path(old_path, filepath)
+        new_path = resolve_relative_to_source(filepath, old_path)
+        print(f"{filepath}: {attr} — {old_path} → {new_path}")
         return f'{attr}="{new_path}"'
 
-    new_content = pattern.sub(replace, content)
+    new_content = pattern.sub(repl, content)
 
     if new_content != content:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(new_content)
-        print(f"✔ Обновлено: {filepath}")
+        print(f"✔ Обновлён: {filepath}")
     else:
         print(f"— Без изменений: {filepath}")
 
-# Рекурсивный обход всех .htm файлов
+# Обход всех HTML-файлов
 for dirpath, _, filenames in os.walk(ROOT_DIR):
     for filename in filenames:
-        if filename.endswith('.htm'):
-            filepath = os.path.join(dirpath, filename)
-            process_file(filepath)
+        if filename.lower().endswith(('.htm', '.html')):
+            fullpath = os.path.join(dirpath, filename)
+            process_file(fullpath)
