@@ -10340,6 +10340,7 @@ body .bx-soa-auth .eye-password input[type="text"] {
   cursor: pointer;
   background-color: #f7f7f7;
   background-color: var(--darkerblack_bg_black);
+  z-index: 2;
 }
 
 .eye-password:focus-within:after {
