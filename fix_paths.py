@@ -1,68 +1,86 @@
 import os
-import re
+from bs4 import BeautifulSoup
 
-TARGET_DIR = 'catalog'  # <- ЗАДАЙ свою папку здесь
-ROOT_DIR = os.path.abspath('./')
+# Путь к корню сайта с .htm файлами
+ROOT_DIR = '.'
 
-pattern = re.compile(
-    r'''(?P<attr>href|src|data-src)=["'](?P<path>(?!https?:|data:|mailto:|tel:|#)[^"']+)["']''',
-    flags=re.IGNORECASE
-)
+# Селектор блока с ссылками
+BLOCK_CLASS = 'bottom-icons-panel'
 
-def find_file_path_from_site_root(target_rel_path):
-    """Ищет файл в структуре сайта, возвращает его абсолютный путь, если найден"""
-    for dirpath, _, filenames in os.walk(ROOT_DIR):
-        for filename in filenames:
-            if os.path.normpath(os.path.join(dirpath, filename)).endswith(os.path.normpath(target_rel_path)):
-                return os.path.join(dirpath, filename)
-    return None
+def calc_depth(filepath):
+    # Определим уровень вложенности файла относительно корня
+    # Корень = 0, например, /index.htm -> 0, /catalog/index.htm -> 1, /auth/index.htm -> 1, /auth/subdir/page.htm -> 2
+    rel_path = os.path.relpath(filepath, ROOT_DIR)
+    # Разделяем путь по /
+    parts = rel_path.split(os.sep)
+    # Если файл в корне, depth = 0, иначе количество папок перед файлом
+    return len(parts) - 1
 
-def resolve_correct_relative(source_file, link_path):
-    """Формирует корректный относительный путь к файлу от source_file"""
-    source_dir = os.path.dirname(source_file)
-    abs_source_dir = os.path.abspath(source_dir)
+def normalize_href(href):
+    # Очистим href от лишних элементов (./, ../), вернем упрощенный путь
+    # Например: ../index.htm -> index.htm, ./catalog/index.htm -> catalog/index.htm
+    return os.path.normpath(href).replace('\\', '/')
 
-    # 1. Сначала пробуем интерпретировать путь относительно текущего файла
-    candidate_abs = os.path.abspath(os.path.join(abs_source_dir, link_path))
-    if os.path.exists(candidate_abs):
-        return os.path.relpath(candidate_abs, abs_source_dir).replace('\\', '/')
+def adjust_link(href, depth):
+    # Относительный путь до корня сайта из текущей папки
+    up_path = '../' * depth
 
-    # 2. Иначе ищем в структуре сайта
-    found_abs = find_file_path_from_site_root(link_path)
-    if found_abs:
-        corrected = os.path.relpath(found_abs, abs_source_dir).replace('\\', '/')
-        return corrected
+    # Уберем возможные ./ и ../ из href (нормализуем)
+    normalized_href = normalize_href(href)
 
-    print(f"⚠ Не найден: {link_path} (в файле {source_file})")
-    return link_path
+    # Если ссылка начинается с '/' — считаем это корнем сайта и превращаем в относительную ссылку
+    if normalized_href.startswith('/'):
+        normalized_href = normalized_href[1:]
+
+    # Теперь вернем ссылку, учитывая уровень вложенности
+    # Например, для depth=2 и href='catalog/index.htm' будет '../../catalog/index.htm'
+    # Если href уже идет с '../', уберем их и добавим свои
+    href_parts = normalized_href.split('/')
+    while href_parts and href_parts[0] == '..':
+        href_parts.pop(0)
+    final_href = up_path + '/'.join(href_parts)
+    # Уберем двойные слэши, если есть
+    final_href = final_href.replace('//', '/')
+    # Если final_href пустой, поставим './'
+    if final_href == '':
+        final_href = ''
+    return final_href
 
 def process_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    def replace(match):
-        attr = match.group('attr')
-        path = match.group('path')
-        new_path = resolve_correct_relative(filepath, path)
-        if new_path != path:
-            print(f"{filepath}: {path} → {new_path}")
-        return f'{attr}="{new_path}"'
+    soup = BeautifulSoup(content, 'html.parser')
+    depth = calc_depth(filepath)
 
-    new_content = pattern.sub(replace, content)
+    block = soup.find('div', class_=BLOCK_CLASS)
+    if not block:
+        return False
 
-    if new_content != content:
+    links = block.find_all('a', href=True)
+    changed = False
+    for a in links:
+        old_href = a['href']
+        new_href = adjust_link(old_href, depth)
+        if old_href != new_href:
+            a['href'] = new_href
+            changed = True
+
+    if changed:
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(new_content)
-        print(f"✔ Обновлено: {filepath}")
-    else:
-        print(f"— Без изменений: {filepath}")
+            f.write(str(soup))
+    return changed
 
-def process_target_folder(target_folder):
-    abs_target = os.path.join(ROOT_DIR, target_folder)
-    for dirpath, _, filenames in os.walk(abs_target):
-        for filename in filenames:
-            if filename.lower().endswith('.htm'):
-                process_file(os.path.join(dirpath, filename))
+def main():
+    count = 0
+    for root, dirs, files in os.walk(ROOT_DIR):
+        for file in files:
+            if file.endswith('.htm') or file.endswith('.html'):
+                fullpath = os.path.join(root, file)
+                if process_file(fullpath):
+                    print(f'Обновлен файл: {fullpath}')
+                    count += 1
+    print(f'Обновлено файлов: {count}')
 
-# ▶ Запускаем обработку целевой папки
-process_target_folder(TARGET_DIR)
+if __name__ == '__main__':
+    main()
