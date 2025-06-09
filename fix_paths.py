@@ -1,86 +1,55 @@
 import os
-from bs4 import BeautifulSoup
+import re
 
-# Путь к корню сайта с .htm файлами
-ROOT_DIR = '.'
+SITE_DIR = "."  # корень сайта, где лежат html/php файлы
+LOGO_ABS_PATH = (
+    "/upload/CMax/7de/a5zzzr7oxd95dux98mdxu5xoycjlquue.png"  # путь от корня сайта
+)
 
-# Селектор блока с ссылками
-BLOCK_CLASS = 'bottom-icons-panel'
 
-def calc_depth(filepath):
-    # Определим уровень вложенности файла относительно корня
-    # Корень = 0, например, /index.htm -> 0, /catalog/index.htm -> 1, /auth/index.htm -> 1, /auth/subdir/page.htm -> 2
-    rel_path = os.path.relpath(filepath, ROOT_DIR)
-    # Разделяем путь по /
-    parts = rel_path.split(os.sep)
-    # Если файл в корне, depth = 0, иначе количество папок перед файлом
-    return len(parts) - 1
+def make_relative_path(from_path, to_path):
+    """Вычислить относительный путь от from_path к to_path"""
+    from_dir = os.path.dirname(from_path)
+    rel_path = os.path.relpath(to_path, start=from_dir)
+    return rel_path.replace("\\", "/")  # на всякий случай заменить \ на /
 
-def normalize_href(href):
-    # Очистим href от лишних элементов (./, ../), вернем упрощенный путь
-    # Например: ../index.htm -> index.htm, ./catalog/index.htm -> catalog/index.htm
-    return os.path.normpath(href).replace('\\', '/')
 
-def adjust_link(href, depth):
-    # Относительный путь до корня сайта из текущей папки
-    up_path = '../' * depth
-
-    # Уберем возможные ./ и ../ из href (нормализуем)
-    normalized_href = normalize_href(href)
-
-    # Если ссылка начинается с '/' — считаем это корнем сайта и превращаем в относительную ссылку
-    if normalized_href.startswith('/'):
-        normalized_href = normalized_href[1:]
-
-    # Теперь вернем ссылку, учитывая уровень вложенности
-    # Например, для depth=2 и href='catalog/index.htm' будет '../../catalog/index.htm'
-    # Если href уже идет с '../', уберем их и добавим свои
-    href_parts = normalized_href.split('/')
-    while href_parts and href_parts[0] == '..':
-        href_parts.pop(0)
-    final_href = up_path + '/'.join(href_parts)
-    # Уберем двойные слэши, если есть
-    final_href = final_href.replace('//', '/')
-    # Если final_href пустой, поставим './'
-    if final_href == '':
-        final_href = ''
-    return final_href
-
-def process_file(filepath):
-    with open(filepath, 'r', encoding='utf-8') as f:
+def update_logo_paths_in_file(file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    soup = BeautifulSoup(content, 'html.parser')
-    depth = calc_depth(filepath)
+    # Найдем все <img ... src="..." data-src="..."> с нашим логотипом по части пути "/upload/CMax/7de/..."
+    # Чтобы не менять другие картинки
+    pattern = r'(<img[^>]+(?:src|data-src)=")([^"]*/upload/CMax/7de/[^"]+)(")'
 
-    block = soup.find('div', class_=BLOCK_CLASS)
-    if not block:
-        return False
+    def repl(match):
+        prefix = match.group(1)
+        old_path = match.group(2)
+        suffix = match.group(3)
 
-    links = block.find_all('a', href=True)
-    changed = False
-    for a in links:
-        old_href = a['href']
-        new_href = adjust_link(old_href, depth)
-        if old_href != new_href:
-            a['href'] = new_href
-            changed = True
+        # Посчитаем новый относительный путь от файла до абсолютного пути логотипа (от корня сайта)
+        new_rel_path = make_relative_path(
+            file_path, os.path.join(SITE_DIR, LOGO_ABS_PATH.lstrip("/"))
+        )
+        return prefix + new_rel_path + suffix
 
-    if changed:
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(str(soup))
-    return changed
+    new_content, count = re.subn(pattern, repl, content, flags=re.IGNORECASE)
+
+    if count > 0:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(new_content)
+        print(f"Обновлено {count} путей в файле: {file_path}")
+        return True
+    return False
+
 
 def main():
-    count = 0
-    for root, dirs, files in os.walk(ROOT_DIR):
+    for root, dirs, files in os.walk(SITE_DIR):
         for file in files:
-            if file.endswith('.htm') or file.endswith('.html'):
-                fullpath = os.path.join(root, file)
-                if process_file(fullpath):
-                    print(f'Обновлен файл: {fullpath}')
-                    count += 1
-    print(f'Обновлено файлов: {count}')
+            if file.endswith((".html", ".htm", ".php")):
+                full_path = os.path.join(root, file)
+                update_logo_paths_in_file(full_path)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
