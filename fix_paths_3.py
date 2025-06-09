@@ -3,7 +3,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from urllib.parse import unquote
 
-ROOT_DIR = Path("путь/к/твоему/корню")  # укажи корневую папку с файлами
+ROOT_DIR = "."  # укажи корневую папку с файлами
 
 
 def is_bottom_nav_block(tag):
