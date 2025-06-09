@@ -10394,3 +10394,7 @@ body .bx-soa-auth .eye-password:after {
   outline-offset: 4px !important;
   border-radius: 4px !important;
 }
+
+.b24-widget-button-inner-mask {
+  background: none !important;
+}
