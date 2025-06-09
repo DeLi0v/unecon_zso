@@ -1,54 +1,71 @@
 import os
 import re
+from bs4 import BeautifulSoup
 
-SITE_DIR = "."  # корень сайта, где лежат html/php файлы
-LOGO_ABS_PATH = (
-    "/upload/CMax/7de/a5zzzr7oxd95dux98mdxu5xoycjlquue.png"  # путь от корня сайта
-)
+SITE_DIR = "."  # корень сайта с файлами
 
 
 def make_relative_path(from_path, to_path):
-    """Вычислить относительный путь от from_path к to_path"""
     from_dir = os.path.dirname(from_path)
     rel_path = os.path.relpath(to_path, start=from_dir)
-    return rel_path.replace("\\", "/")  # на всякий случай заменить \ на /
+    return rel_path.replace("\\", "/")
 
 
-def update_logo_paths_in_file(file_path):
+def update_nav_links_in_file(file_path, site_root_abs):
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # Найдем все <img ... src="..." data-src="..."> с нашим логотипом по части пути "/upload/CMax/7de/..."
-    # Чтобы не менять другие картинки
-    pattern = r'(<img[^>]+(?:src|data-src)=")([^"]*/upload/CMax/7de/[^"]+)(")'
+    soup = BeautifulSoup(content, "html.parser")
 
-    def repl(match):
-        prefix = match.group(1)
-        old_path = match.group(2)
-        suffix = match.group(3)
+    navs = soup.find_all(
+        "nav"
+    )  # Можно изменить на soup.select('.nav') если навигация по классу
+    if not navs:
+        return False
 
-        # Посчитаем новый относительный путь от файла до абсолютного пути логотипа (от корня сайта)
-        new_rel_path = make_relative_path(
-            file_path, os.path.join(SITE_DIR, LOGO_ABS_PATH.lstrip("/"))
-        )
-        return prefix + new_rel_path + suffix
+    changed = False
+    for nav in navs:
+        links = nav.find_all("a", href=True)
+        for a in links:
+            href = a["href"].strip()
+            # Если ссылка абсолютная (http:// или https://), пропускаем
+            if (
+                href.startswith("http://")
+                or href.startswith("https://")
+                or href.startswith("#")
+                or href.startswith("mailto:")
+            ):
+                continue
+            # Если ссылка абсолютная от корня сайта (начинается с /), то её нужно поправить на относительный путь
+            if href.startswith("/"):
+                abs_target = os.path.join(site_root_abs, href.lstrip("/"))
+            else:
+                # относительная ссылка, считаем абсолютный путь от текущ файла
+                abs_target = os.path.normpath(
+                    os.path.join(os.path.dirname(file_path), href)
+                )
 
-    new_content, count = re.subn(pattern, repl, content, flags=re.IGNORECASE)
+            # Теперь надо вычислить правильный относительный путь от текущего файла до abs_target
+            new_rel = make_relative_path(file_path, abs_target)
+            if new_rel != href:
+                a["href"] = new_rel
+                changed = True
 
-    if count > 0:
+    if changed:
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(new_content)
-        print(f"Обновлено {count} путей в файле: {file_path}")
-        return True
-    return False
+            f.write(str(soup))
+        print(f"Обновлены ссылки навигации в файле: {file_path}")
+    return changed
 
 
 def main():
+    # Абсолютный путь к корню сайта
+    site_root_abs = os.path.abspath(SITE_DIR)
     for root, dirs, files in os.walk(SITE_DIR):
         for file in files:
             if file.endswith((".html", ".htm", ".php")):
-                full_path = os.path.join(root, file)
-                update_logo_paths_in_file(full_path)
+                full_path = os.path.abspath(os.path.join(root, file))
+                update_nav_links_in_file(full_path, site_root_abs)
 
 
 if __name__ == "__main__":
