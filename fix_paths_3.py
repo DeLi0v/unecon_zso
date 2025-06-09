@@ -1,12 +1,24 @@
 import os
 from bs4 import BeautifulSoup
-import re
 
-# Папка, где находятся .htm файлы
-ROOT_DIR = "."
+ROOT_DIR = "."  # Директория с HTML-файлами
 
-# Регулярное выражение для поиска нужных ссылок
-INDEX_LINK_REGEX = re.compile(r"^\.\./(index-\d+\.htm(?:\?.*)?)$")
+
+def is_exception(a_tag):
+    """Проверяет, нужно ли исключить ссылку из замены"""
+    # Исключение по классу
+    if "breadcrumbs__link" in a_tag.get("class", []):
+        return True
+
+    # Исключение — если находится внутри логотипа
+    parent = a_tag
+    for _ in range(4):  # Проверим до 4 уровней вверх
+        parent = parent.parent
+        if parent and "class" in parent.attrs:
+            classes = parent.get("class", [])
+            if any(cls in ["logo", "logo-block"] for cls in classes):
+                return True
+    return False
 
 
 def process_file(filepath):
@@ -16,22 +28,16 @@ def process_file(filepath):
     soup = BeautifulSoup(content, "html.parser")
     changed = False
 
-    # Ищем все теги <a href="...">
     for a in soup.find_all("a", href=True):
-        href = a["href"]
-        match = INDEX_LINK_REGEX.match(href)
-        if match:
-            new_href = match.group(1)  # удаляем ../
-            a["href"] = new_href
+        if a["href"] == "../index.htm" and not is_exception(a):
+            print(f'  Обновлена ссылка в {filepath}: {a["href"]} → index.htm')
+            a["href"] = "index.htm"
             changed = True
-            print(f"  Обновлена ссылка в {filepath}: {href} → {new_href}")
 
-    # Если были изменения, переписываем файл
     if changed:
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(str(soup))
         return True
-
     return False
 
 
@@ -40,10 +46,10 @@ def main():
     for root, _, files in os.walk(ROOT_DIR):
         for file in files:
             if file.endswith(".htm") or file.endswith(".html"):
-                fullpath = os.path.join(root, file)
-                if process_file(fullpath):
+                filepath = os.path.join(root, file)
+                if process_file(filepath):
                     updated_files += 1
-    print(f"\nИтого обновлено файлов: {updated_files}")
+    print(f"\nГотово. Изменено файлов: {updated_files}")
 
 
 if __name__ == "__main__":
