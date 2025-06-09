@@ -3,75 +3,49 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from urllib.parse import unquote
 
-ROOT_DIR = "."  # корневая папка с html-файлами
+ROOT_DIR = Path("путь/к/твоему/корню")  # укажи корневую папку с файлами
 
 
-def resolve_path(base_file, href):
-    """Абсолютный путь к ресурсу по ссылке относительно текущего HTML-файла"""
-    href_clean = href.split("?")[0].split("#")[0]
-    return (base_file.parent / href_clean).resolve()
+def is_bottom_nav_block(tag):
+    return tag.name == "div" and "bottom_nav" in tag.get("class", [])
 
 
-def file_exists(path):
-    return path.is_file()
-
-
-def is_in_logo_or_breadcrumbs(tag):
-    """Проверяет, находится ли ссылка внутри логотипа или хлебных крошек"""
-    for parent in tag.parents:
-        if parent.has_attr("class"):
-            cls = parent["class"]
-            if "logo" in cls or "breadcrumbs__link" in cls:
-                return True
-    return False
-
-
-def process_file(file_path):
+def fix_links_in_bottom_nav(file_path: Path):
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     soup = BeautifulSoup(content, "html.parser")
     changed = False
 
-    for a in soup.find_all("a", href=True):
-        if is_in_logo_or_breadcrumbs(a):
-            continue
+    for bottom_nav in soup.find_all(is_bottom_nav_block):
+        # ищем все ссылки внутри блока bottom_nav
+        for a in bottom_nav.find_all("a", href=True):
+            href = unquote(a["href"])
 
-        href = unquote(a["href"])
-
-        if href.startswith(("http://", "https://", "//", "#", "mailto:", "tel:")):
-            continue
-
-        original_path = resolve_path(file_path, href)
-
-        if not file_exists(original_path):
-            cleaned_href = href.lstrip("../").lstrip("/")
-            local_path = file_path.parent / cleaned_href
-
-            if file_exists(local_path):
-                print(
-                    f"[+] {file_path.relative_to(ROOT_DIR)}: исправлена ссылка {href} → {cleaned_href}"
-                )
-                a["href"] = cleaned_href
-                changed = True
+            # исправляем только ссылки, ведущие на ../../../index.htm (или с похожими переходами вверх)
+            if href.endswith("index.htm") and ("../" in href or "..\\" in href):
+                # заменяем на просто index.htm (без переходов в верх)
+                new_href = "index.htm"
+                if a["href"] != new_href:
+                    print(
+                        f"[+] {file_path.relative_to(ROOT_DIR)}: исправлена ссылка {a['href']} → {new_href}"
+                    )
+                    a["href"] = new_href
+                    changed = True
 
     if changed:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(str(soup))
-        return True
-    return False
+    return changed
 
 
-def main():
-    fixed_count = 0
-    for root, _, files in os.walk(ROOT_DIR):
-        for name in files:
-            if name.endswith((".htm", ".html")):
-                path = Path(root) / name
-                if process_file(path):
-                    fixed_count += 1
-    print(f"\n✅ Готово. Исправлено файлов: {fixed_count}")
+def process_all_files(root_dir):
+    for root, _, files in os.walk(root_dir):
+        for file in files:
+            if file.endswith(".htm") or file.endswith(".html"):
+                file_path = Path(root) / file
+                fix_links_in_bottom_nav(file_path)
 
 
 if __name__ == "__main__":
-    main()
+    process_all_files(ROOT_DIR)
