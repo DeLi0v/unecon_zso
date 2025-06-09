@@ -271,12 +271,12 @@ ul.list-unstyled li:before {
   color: var(--light_basic_text_black);
 }
 .darken {
-  color: #333;
+  color: black !important;
   color: var(--white_text_black);
   text-decoration: none;
 }
 .black {
-  color: #222;
+  color: black;
   color: var(--white_text_black);
   text-decoration: none;
 }
@@ -603,7 +603,7 @@ table[data-bx-no-border="Y"] td {
 .order-block .text h4,
 .order-block .text h5,
 .order-block .text h6 {
-  color: #333333;
+  color: black;
   margin-bottom: 5px;
   margin-top: 0px;
 }

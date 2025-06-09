@@ -15056,6 +15056,7 @@ div.reviews-code-box ol li {
   margin-bottom: 20px;
   margin-top: 10px;
   overflow: hidden;
+  color: black;
 }
 .item-views .item .previewtext p {
   margin-bottom: 0px;
@@ -20653,10 +20654,18 @@ table.contacts-stores tr.item td:last-of-type {
 .arrow_scroll {
   max-height: 52px;
   overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  scrollbar-width: none; /* Firefox */
+}
+.arrow_scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
 .arrow_scroll .nav.nav-tabs {
   white-space: nowrap;
-  min-width: 300%;
+  /* min-width: 300%; */
   z-index: 1;
   position: relative;
   /* margin-left: 0px;
