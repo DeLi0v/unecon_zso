@@ -363,6 +363,7 @@ ul.list-unstyled li:before {
 body .box-shadow:hover {
   border-color: var(--stroke_black_hover);
   background-color: var(--card_bg_hover_black);
+  border: 2px solid black;
 }
 
 .margin-10 {
